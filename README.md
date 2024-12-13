@@ -27,7 +27,6 @@ git fetch template && git checkout template/master .github
 # Диаграммы решения
 
 ```mermaid
-info
 sequenceDiagram
     participant Alice
     participant Bob
@@ -39,7 +38,6 @@ sequenceDiagram
     John-->>Alice: Great!
     John->>Bob: How about you?
     Bob-->>John: Jolly good!
-
 ```
 
 ### Алгоритмы обработчиков
