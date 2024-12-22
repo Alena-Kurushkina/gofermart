@@ -2,22 +2,6 @@
 
 ![alt text](https://github.com/Alena-Kurushkina/gophermart/blob/develop/db_erd.png)
 
-# Диаграммы решения
-
-```mermaid
-sequenceDiagram
-    participant Alice
-    participant Bob
-    Alice->>John: Hello John, how are you?
-    loop HealthCheck
-        John->>John: Fight against hypochondria
-    end
-    Note right of John: Rational thoughts <br/>prevail!
-    John-->>Alice: Great!
-    John->>Bob: How about you?
-    Bob-->>John: Jolly good!
-```
-
 ### Алгоритмы обработчиков
 
 #### **Регистрация пользователя**
@@ -91,3 +75,19 @@ Content-Type: application/json
     Если не совпадает, то возвращаем 401
 5. Формируем JWT и клалём в куки
 6. Возвращаем 200
+
+# Диаграммы решения
+
+```mermaid
+sequenceDiagram
+    participant Alice
+    participant Bob
+    Alice->>John: Hello John, how are you?
+    loop HealthCheck
+        John->>John: Fight against hypochondria
+    end
+    Note right of John: Rational thoughts <br/>prevail!
+    John-->>Alice: Great!
+    John->>Bob: How about you?
+    Bob-->>John: Jolly good!
+```
