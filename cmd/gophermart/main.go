@@ -8,31 +8,31 @@ import (
 	"github.com/Alena-Kurushkina/gophermart.git/internal/gophermart"
 	"github.com/Alena-Kurushkina/gophermart.git/internal/logger"
 	"github.com/Alena-Kurushkina/gophermart.git/internal/storage"
-	"go.uber.org/zap"
+	"github.com/Alena-Kurushkina/gophermart.git/internal/worker"
 )
 
 func main(){
-	ctx:=context.Background()
-
 	config:=config.InitConfig()
 
 	logger.CreateLogger()
 	defer logger.Log.Sync()
 
 	logger.Log.Debug("Config parameters: ",
-		zap.String("Database URI", config.DatabaseURI),
-		zap.String("Server address", config.ServerAddress),
-		zap.String("Accrual server address", config.AccrualAddress),
+		logger.StringMark("Database URI", config.DatabaseURI),
+		logger.StringMark("Server address", config.ServerAddress),
+		logger.StringMark("Accrual server address", config.AccrualAddress),
 	)
 
 	storage, err:=storage.NewDBStorage(config.DatabaseURI)
 	if err!=nil{
 		logger.Log.Panic("Error initializing DB",
-			zap.Error(err),
+		logger.ErrorMark(err),
 		)
 	}
 
-	ghmart:=api.NewGophermart(ctx,storage, config)
+	queue:=worker.RunWorkers(context.TODO(), storage, config.AccrualAddress)
+
+	ghmart:=api.NewGophermart(storage, config, queue)
 	server:= gophermart.NewServer(ghmart, config)
 
 	server.Run()
