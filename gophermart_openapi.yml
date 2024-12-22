@@ -1,0 +1,248 @@
+openapi: 3.0.3
+info:
+  title: Gophermart service
+  version: '1.0'
+servers:
+  - url: https://api.server.test/v1
+paths:
+  /api/user/register:
+    post:
+      tags:
+        - user
+      summary: Register new user
+      security: [] # no authentication
+      requestBody:
+        required: true
+        description: A JSON object containing the login and password.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/User"
+      responses:
+        '200':
+          description: User was registered and authenticated successfully. The session ID is returned in a cookie
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: 
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '409':
+          description: Login is used by another user
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /api/user/login:
+    post:
+      tags:
+        - user
+      summary: Login user with login and password.
+      security: []      
+      requestBody:
+        required: true
+        description: A JSON object containing the login and password
+        content:
+          application/json:
+            schema: 
+              $ref: "#/components/schemas/User"
+      responses:
+        '200':
+          description: User was registered and authenticated successfully. The session ID is returned in a cookie
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: 
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          description: Incorrect login/password
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /api/user/orders:
+    post:
+      tags:
+        - order
+      summary: Add order number to the service
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        description: Order number of arbitrary length in text format
+        content:
+          text/plain:
+            schema:
+              type: string
+      responses:
+        '200':
+          description: Order number has already been added by this user
+        '202':
+          description: New order number is accepted for processing
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '409':
+          description: Order number has already been added by another user
+        '422':
+          description: Incorrect order number format
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    get:
+      tags:
+        - order
+      summary: Get list of user orders numbers sorted by date
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Order'
+        '204':
+          description: No content
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /api/user/balance:
+    get:
+      tags:
+        - balance
+      summary: Get sum of orders accruals and sum of used accruals
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Accruals'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /api/user/balance/withdraw:
+    post:
+      tags:
+        - balance
+      summary: Withdraw accruals
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        description: A JSON object containing order number and withdrawing
+        content:
+            application/json:
+              schema: 
+                $ref: "#/components/schemas/Withdrawal"
+      responses:
+        '200':
+          description: Success
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '402':
+          description: Not enough funds
+        '422':
+          description: Incorrect order number
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /api/user/withdrawals:
+    get:
+      tags:
+        - balance
+      summary: Get information about withdrawals ordered by date of withdrawing
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Withdrawal'
+        '204':
+          description: No withdrawals
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    User:
+      type: object
+      properties:
+        login:
+          type: string
+          example: 'User123'
+        password:
+          type: string
+          example: '12345qwerty'
+      xml:
+        name: user
+    Order:
+      type: object
+      properties:
+        number:
+          type: string
+          example: '9278923470'
+        status: 
+          type: string
+          example: 'PROCESSED'
+        accrual:
+          type: integer
+          nullable: true
+          example: 500
+        uploaded_at:
+          type: string
+          format: date-time
+          example: '2020-12-10T15:15:45+03:00'
+      xml:
+        name: order
+    Accruals:
+      type: object
+      properties:
+        current:
+          type: number
+          format: float
+          example: 500.5
+        withdrawn:
+          type: number
+          format: float
+          example: 42
+      xml: 
+        name: accruals
+    Withdrawal:
+      type: object
+      properties:
+        order:
+          type: string
+          example: '2377225624'
+        sum:
+          type: number
+          format: float
+          example: 751
+        processed_at:
+          type: string
+          format: date-time
+          example: '2020-12-10T15:15:45+03:00'
+          nullable: true
+  responses:
+    UnauthorizedError:
+      description: Access token is missing or invalid
+    InternalServerError:
+      description: Internal server error
+    BadRequestError:
+      description: Bad request
