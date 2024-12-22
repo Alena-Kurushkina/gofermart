@@ -1,6 +1,6 @@
 # go-musthave-diploma-tpl
 
-![alt text](https://github.com/Alena-Kurushkina/gophermart.git/db_erd.png)
+![alt text](https://github.com/Alena-Kurushkina/gophermart/blob/develop/db_erd.png)
 
 # Диаграммы решения
 
