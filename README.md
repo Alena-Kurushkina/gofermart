@@ -1,6 +1,55 @@
-# go-musthave-diploma-tpl
+# Gophermart service
+
+### Диаграмма Базы данных
+
+#### Архитектура БД (вариант 1, актуальная)
 
 ![alt text](https://github.com/Alena-Kurushkina/gophermart/blob/develop/db_erd.png)
+
+#### Архитектура БД (вариант 2, в проекте не применяется)
+
+![alt text](https://github.com/Alena-Kurushkina/gophermart/blob/develop/db_erd_2.png)
+
+CREATE TABLE users
+(
+    id uuid PRIMARY KEY,
+    login varchar NOT NULL UNIQUE,
+    password varchar NOT NULL
+);
+
+CREATE TYPE status AS ENUM ('NEW', 'PROCESSING', 'INVALID', 'PROCESSED');
+CREATE TYPE transaction_type AS ENUM ('PLUS', 'MINUS');
+
+-- информация обо всех начислениях и списаниях
+CREATE TABLE transactions
+(
+	id serial PRIMARY KEY,
+	amount integer NOT NULL, -- количество баллов
+	type transaction_type NOT NULL, -- тип транзакции: начисление или списание
+	timestamp timestamptz DEFAULT NOW(),
+	user_id	uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- информация о заказах, которые добавляет пользователь в систему
+CREATE TABLE orders
+(
+    id serial PRIMARY KEY,
+    number varchar NOT NULL UNIQUE, -- номер заказа
+    user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    uploaded_at timestamptz DEFAULT NOW(),
+    status_processing status NOT NULL, -- статус заказа
+    transaction_id integer REFERENCES transactions(id) -- id транзакции(если произошло начисление баллов); может быть NULL, когда неизвестны баллы за заказ
+); 
+
+-- информация о заказах, в счёт которых пользователь списывает баллы с баланса
+CREATE TABLE withdraws
+(
+    id serial PRIMARY KEY,
+    number varchar NOT NULL, -- номер заказа
+    user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    uploaded_at timestamptz DEFAULT NOW(),
+	transaction_id integer NOT NULL REFERENCES transactions(id) -- id транзакции списания баллов с баланса
+);
 
 ### Алгоритмы обработчиков
 
