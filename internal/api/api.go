@@ -18,7 +18,7 @@ import (
 )
 
 type Storager interface {
-	AddOrder(ctx context.Context, user_id uuid.UUID, number string) error
+	AddOrder(ctx context.Context, userID uuid.UUID, number string) error
 	GetOrderByNumber(ctx context.Context, number string) (*Order,error)
 	//UpdateOrderStatus(ctx context.Context, number, status string, accrual uint32) error
 }

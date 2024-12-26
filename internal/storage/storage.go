@@ -47,13 +47,13 @@ func NewDBStorage (connectionStr string) (*DBStorage, error){
 	return &DBStorage{database: db}, nil
 }
 
-func (d DBStorage) AddOrder(ctx context.Context, user_id uuid.UUID, number string) error {
+func (d DBStorage) AddOrder(ctx context.Context, userID uuid.UUID, number string) error {
 	result, err:= d.database.ExecContext(ctx,
 		`INSERT INTO orders (user_id, number, status_processing) 
 		VALUES ($1, $2, $3) 
 		ON CONFLICT (number) 
 			DO NOTHING;`,
-		user_id,
+		userID,
 		number,
 		"NEW",
 	)
