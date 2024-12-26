@@ -1,8 +1,6 @@
 module github.com/Alena-Kurushkina/gophermart.git
 
-go 1.22.0
-
-toolchain go1.22.8
+go 1.23.4
 
 require (
 	github.com/go-chi/chi/v5 v5.1.0
@@ -21,6 +19,7 @@ require (
 )
 
 require (
+	github.com/golang-jwt/jwt/v4 v4.5.1
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/jackc/pgx/v5 v5.7.1
