@@ -68,14 +68,14 @@ func getUserIDFromJWT(tokenString string) (uuid.UUID, error) {
 	return claims.UserID, nil
 }
 
-// func setNewJWTInCookie(w http.ResponseWriter, userID uuid.UUID) error {
-// 	jwt, err := buildJWTString(userID)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	http.SetCookie(w, &http.Cookie{Name: "token", Value: jwt, MaxAge: 0})
-// 	return nil
-// }
+func SetNewJWTInCookie(w http.ResponseWriter, userID uuid.UUID) error {
+	jwt, err := buildJWTString(userID)
+	if err != nil {
+		return err
+	}
+	http.SetCookie(w, &http.Cookie{Name: "token", Value: jwt, MaxAge: 0})
+	return nil
+}
 
 // AuthMiddleware realises middleware for user authentication
 func AuthMiddleware(h http.Handler) http.Handler {

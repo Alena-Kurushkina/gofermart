@@ -4,8 +4,8 @@ import (
 	"context"
 	"database/sql"
 
-	_"github.com/golang-migrate/migrate/v4"
-	_"github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	uuid "github.com/satori/go.uuid"
@@ -116,4 +116,29 @@ func (d DBStorage) UpdateOrderStatusAndAccrual(ctx context.Context, number, stat
 	}
 
 	return nil 
+}
+
+func (d DBStorage) AddUser(ctx context.Context, userID uuid.UUID, login, hashedPassword string) error {
+	// result, err:= d.database.ExecContext(ctx,
+	// 	`INSERT INTO orders (user_id, number, status_processing) 
+	// 	VALUES ($1, $2, $3) 
+	// 	ON CONFLICT (number) 
+	// 		DO NOTHING;`,
+	// 	userID,
+	// 	login,
+	// 	hashedPassword,
+	// )
+	// if err!=nil{
+	// 	return err
+	// }
+	// affected, err:=result.RowsAffected()
+	// if err!=nil{
+	// 	return err
+	// }
+	// if affected==0 {
+	// 	logger.Log.Info("Attempt to add order with number that already exists")
+	// 	return gopherror.ErrRecordAlreadyExists
+	// }
+
+	return nil
 }
