@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"time"
 
-	gopherror "github.com/Alena-Kurushkina/gophermart.git/internal/errors"
+	"github.com/Alena-Kurushkina/gophermart.git/internal/gopherror"
 	"github.com/Alena-Kurushkina/gophermart.git/internal/logger"
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 )
 
 // Claims — структура утверждений, которая включает стандартные утверждения и
