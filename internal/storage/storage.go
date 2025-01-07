@@ -154,3 +154,124 @@ func (d DBStorage) CheckUser(ctx context.Context, login string) (uuid.UUID, stri
 	}
 	return id, password, nil
 }
+
+func (d DBStorage) GetUserOrders(ctx context.Context, id uuid.UUID) ([]api.Order, error){
+	rows, err := d.database.QueryContext(ctx,
+		`SELECT number, user_id, uploaded_at, status_processing, accrual
+		FROM orders
+		WHERE user_id = $1
+		ORDER BY uploaded_at DESC`,
+		id.String(),
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	records := make([]api.Order, 0, 10)
+
+	// пробегаем по всем записям
+	for rows.Next() {
+		var v api.Order
+		err = rows.Scan(&v.Number, &v.UserID, &v.UploadedAt, &v.Status, &v.Accrual)
+		if err != nil {
+			return nil, err
+		}
+
+		records = append(records, v)
+	}
+
+	// проверяем на ошибки
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+	return records, nil
+}
+
+func (d DBStorage) GetUserAccruals(ctx context.Context, id uuid.UUID) (*api.Balance, error){
+	rows, err := d.database.QueryContext(ctx,
+		`SELECT sum(accrual) from orders where user_id=$1
+		UNION ALL
+		SELECT sum(sum) from withdraws where user_id=$1
+		`,
+		id.String(),
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var balance api.Balance
+
+	// считываем значение суммы начислений
+	if rows.Next(){
+		err=rows.Scan(&balance.Accruals)
+		if err != nil {
+			return nil, err
+		}
+	}else{
+		return nil, rows.Err()
+	}
+
+	// считываем значение суммы списаний
+	if rows.Next(){
+		err = rows.Scan(&balance.Withdrawn)
+		if err != nil {
+			return nil, err
+		}
+	}else{
+		return nil, rows.Err()
+	}
+
+	return &balance, nil
+}
+
+func (d DBStorage) WithdrawFunds(ctx context.Context, id uuid.UUID, number string, sum uint32) error {
+	_, err:= d.database.ExecContext(ctx,
+		`INSERT INTO withdraws (withdraw_number, sum, user_id) 
+		VALUES ($1, $2, $3);`,
+		number,
+		sum,
+		id,
+	)
+	if err!=nil{
+		return err
+	}
+
+	return nil
+}
+
+func (d DBStorage) GetUserWithdrawals(ctx context.Context, id uuid.UUID) ([]api.Withdrawal, error){
+	rows, err := d.database.QueryContext(ctx,
+		`SELECT withdraw_number, sum, processed_at
+		FROM withdraws
+		WHERE user_id = $1
+		ORDER BY processed_at DESC`,
+		id.String(),
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	records := make([]api.Withdrawal, 0, 10)
+
+	// пробегаем по всем записям
+	for rows.Next() {
+		var v api.Withdrawal
+		err = rows.Scan(&v.OrderNumber, &v.Sum, &v.ProcessedAt)
+		if err != nil {
+			return nil, err
+		}
+
+		records = append(records, v)
+	}
+
+	// проверяем на ошибки
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+	return records, nil
+}

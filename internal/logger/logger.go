@@ -1,6 +1,6 @@
 package logger
 
-import (	
+import (
 	"net/http"
 	"os"
 	"time"
@@ -65,7 +65,7 @@ type (
 	responseData struct {
 		code int
 		size int
-		body []byte
+		body string
 	}
 
 	loggingResponseWriter struct {
@@ -77,7 +77,7 @@ type (
 func (r *loggingResponseWriter) Write(b []byte) (int, error) {
 	size, err := r.ResponseWriter.Write(b)
 	r.responseData.size += size
-	r.responseData.body=b
+	r.responseData.body=string(b)
 	return size, err
 }
 
@@ -109,13 +109,13 @@ func LogMiddleware(h http.Handler) http.Handler {
 
 		uri := r.RequestURI
 		method := r.Method
-		//requestBody,_:=io.ReadAll(r.Body)
 
 		lw := loggingResponseWriter{
 			ResponseWriter: w,
 			responseData: &responseData{
 				code: 0,
 				size: 0,
+				body: "",
 			},
 		}
 		logRequest(uri, method)
@@ -124,6 +124,9 @@ func LogMiddleware(h http.Handler) http.Handler {
 
 		duration := time.Since(start)	
 		logResponse(lw.responseData.code, lw.responseData.size, uri, duration)
+		if lw.responseData.code >=400{
+			Log.Error("Response with error", zap.String("Error", lw.responseData.body))
+		}
 		Log.Debug("------------------------------------------------")
 	}
 

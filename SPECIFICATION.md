@@ -252,7 +252,7 @@ Content-Type: application/json
 
 {
 	"order": "2377225624",
-    "sum": 751
+  "sum": 751
 }
 ```
 
