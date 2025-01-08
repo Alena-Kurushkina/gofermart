@@ -57,7 +57,7 @@ type (
 func (r *loggingResponseWriter) Write(b []byte) (int, error) {
 	size, err := r.ResponseWriter.Write(b)
 	r.responseData.size += size
-	r.responseData.body=string(b)
+	//r.responseData.body=string(b)
 	return size, err
 }
 
@@ -104,9 +104,9 @@ func LogMiddleware(h http.Handler) http.Handler {
 
 		duration := time.Since(start)	
 		logResponse(lw.responseData.code, lw.responseData.size, uri, duration)
-		if lw.responseData.code >=400{
-			Log.Error("Response with error", zap.String("Error", lw.responseData.body))
-		}
+		// if lw.responseData.code >=400{
+		// 	Log.Error("Response with error", zap.String("Error", lw.responseData.body))
+		// }
 		Log.Debug("------------------------------------------------")
 	}
 

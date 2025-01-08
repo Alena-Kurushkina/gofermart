@@ -385,7 +385,7 @@ func (gh *Gophermart) GetWithdrawals(res http.ResponseWriter, req *http.Request)
 
 	if len(withdrawals) == 0 {
 		// `204` — нет ни одного списания
-		res.WriteHeader(http.StatusNoContent)
+		http.Error(res, "No one withdrawal", http.StatusNoContent)
 		return
 	}
 
