@@ -11,7 +11,7 @@ import (
 	luhnmod10 "github.com/luhnmod10/go"
 	uuid "github.com/satori/go.uuid"
 
-	authenticator "github.com/Alena-Kurushkina/gophermart.git/internal/auth"
+	"github.com/Alena-Kurushkina/gophermart.git/internal/auth"
 	"github.com/Alena-Kurushkina/gophermart.git/internal/config"
 	"github.com/Alena-Kurushkina/gophermart.git/internal/gophermart"
 	"github.com/Alena-Kurushkina/gophermart.git/internal/gopherror"
@@ -97,7 +97,7 @@ func (gh *Gophermart) UserAuthenticate(res http.ResponseWriter, req *http.Reques
 	}
 
 	// создаём токен аутентификации и добавляем в куки
-	err = authenticator.SetNewJWTInCookie(res, userID)
+	err = auth.SetNewJWTInCookie(res, userID)
 	if err != nil {
 		// `500` — внутренняя ошибка сервера
 		http.Error(res, "Can't create JWT", http.StatusInternalServerError)
@@ -154,7 +154,7 @@ func (gh *Gophermart) UserRegister(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// создаём токен аутентификации и добавляем в куки
-	err = authenticator.SetNewJWTInCookie(res, userID)
+	err = auth.SetNewJWTInCookie(res, userID)
 	if err != nil {
 		// `500` — внутренняя ошибка сервера
 		http.Error(res, "Can't create JWT", http.StatusInternalServerError)

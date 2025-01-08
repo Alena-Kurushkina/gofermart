@@ -4,8 +4,8 @@ import (
 	"context"
 	"database/sql"
 
-	_ "github.com/golang-migrate/migrate/v4"
-	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jackc/pgx/v5/pgconn"
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -30,22 +30,22 @@ func NewDBStorage (connectionStr string) (*DBStorage, error){
 	}
 	logger.Log.Debug("DB connection opened")
 
-	// TODO: use makefile
-	// driver, err := postgres.WithInstance(db, &postgres.Config{})
-	// if err!=nil{
-	// 	return nil, err
-	// }
-    // m, err := migrate.NewWithDatabaseInstance(
-    //     "file:/Users/alena/GoLang/gophermart/internal/storage/migrations",
-    //     "gophermart", driver,
-	// )
-	// if err!=nil{
-	// 	return nil, err
-	// }
-    // err=m.Up()
-	// if err!=nil{
-	// 	return nil, err
-	// }
+	//TODO: use makefile
+	driver, err := postgres.WithInstance(db, &postgres.Config{})
+	if err!=nil{
+		return nil, err
+	}
+    m, err := migrate.NewWithDatabaseInstance(
+        "file:internal/storage/migrations",
+        "gophermart", driver,
+	)
+	if err!=nil{
+		return nil, err
+	}
+    err=m.Up()
+	if err!=nil{
+		return nil, err
+	}
 
 	return &DBStorage{database: db}, nil
 }

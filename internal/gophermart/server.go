@@ -5,7 +5,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	authenticator "github.com/Alena-Kurushkina/gophermart.git/internal/auth"
+	"github.com/Alena-Kurushkina/gophermart.git/internal/auth"
 	"github.com/Alena-Kurushkina/gophermart.git/internal/compress"
 	"github.com/Alena-Kurushkina/gophermart.git/internal/config"
 	"github.com/Alena-Kurushkina/gophermart.git/internal/logger"
@@ -50,7 +50,7 @@ func newRouter(hdl Handler) chi.Router{
 	r.Post("/api/user/login", hdl.UserAuthenticate)
 
 	r.Group(func(r chi.Router){
-		r.Use(authenticator.AuthMiddleware)
+		r.Use(auth.AuthMiddleware)
 		r.Post("/api/user/orders", hdl.AddOrder)
 		r.Get("/api/user/orders", hdl.GetOrders)
 		r.Get("/api/user/balance", hdl.GetBalance)
