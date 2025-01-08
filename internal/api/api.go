@@ -323,6 +323,11 @@ func (gh *Gophermart) WithdrawFunds(res http.ResponseWriter, req *http.Request) 
 		return
 	}
 
+	logger.Log.Debug("Withdraw request", 
+		logger.Float32Mark("sum", withdrawal.Sum),
+		logger.StringMark("order", withdrawal.OrderNumber),
+	)
+
 	if valid := luhnmod10.Valid(withdrawal.OrderNumber); !valid {
 		//`422` — неверный номер заказа
 		http.Error(res, "Incorrect order number", http.StatusUnprocessableEntity)
