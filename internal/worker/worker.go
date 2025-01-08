@@ -71,7 +71,7 @@ type AccrualResponse struct {
 
 func (u *updater) updateStatus(number string) (Status, uint32, error) {
 	logger.Log.Debug("Sending request to accrual service to update order status")
-	req,err:=http.NewRequest(http.MethodGet, "http://"+u.accrualAddress+"/api/orders/"+number, nil)
+	req,err:=http.NewRequest(http.MethodGet, u.accrualAddress+"/api/orders/"+number, nil)
 	if err!=nil{
 		return StatusNew, 0, err
 	}
@@ -163,12 +163,6 @@ func (w *Worker) loop() {
 	tempStatuses := []string{StatusRegistered, StatusProcessing, StatusNew}
     for {
 		// TODO: как и когда закрывать канал с заказами
-
-		// if _,ok:= <-w.doneCtx.Done();!ok {
-		// 	logger.Log.Info("Worker is stopped")
-		// 	close(w.queue)
-		// 	break
-		// }
 
 		// берём заказ из очереди
 		t := w.queue.Pop()
