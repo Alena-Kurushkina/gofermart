@@ -176,15 +176,16 @@ func (w *Worker) loop() {
 			w.queue.Push(t)
 			continue
 		}
-		logger.Log.Debug("Worker has updated the status of order",
-			logger.IntMark("Worker id", w.id),
-			logger.StringMark("Order number", t.Number),
-			logger.StringMark("New status", string(accrualStatus)),
-			logger.StringMark("Old status", string(t.Status)),
-			logger.Uint32Mark("Accrual", accrual),
-		)
+		
 		// если статус обновился, обновляем данные в БД
 		if string(accrualStatus)!=string(t.Status){
+			logger.Log.Debug("Worker has updated the status of order",
+				logger.IntMark("Worker id", w.id),
+				logger.StringMark("Order number", t.Number),
+				logger.StringMark("New status", string(accrualStatus)),
+				logger.StringMark("Old status", string(t.Status)),
+				logger.Uint32Mark("Accrual", accrual),
+			)
 			if accrualStatus == StatusProcessed {
 				w.updater.saveStatusAndAccrual(w.doneCtx, t.Number, accrualStatus, accrual)
 			} else {

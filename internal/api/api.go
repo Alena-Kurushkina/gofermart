@@ -193,6 +193,7 @@ func (gh *Gophermart) AddOrder(res http.ResponseWriter, req *http.Request) {
 	if valid := luhnmod10.Valid(number); !valid {
 		//`422` — неверный формат номера заказа
 		http.Error(res, "Incorrect order number", http.StatusUnprocessableEntity)
+		return
 	}
 
 	q := req.URL.Query()
@@ -394,6 +395,8 @@ func (gh *Gophermart) GetWithdrawals(res http.ResponseWriter, req *http.Request)
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	logger.Log.Debug("User withdrawals", logger.StringMark("Output", string(response)))
 	res.Write(response)
 
 	//`200` — успешная обработка запроса
