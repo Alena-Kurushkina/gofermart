@@ -61,10 +61,7 @@ func getUserIDFromJWT(tokenString string) (uuid.UUID, error) {
 	if !token.Valid {
 		return uuid.Nil, gopherror.ErrTokenInvalid
 	}
-	// if claims.UserID == uuid.Nil {
-	// 	return uuid.Nil, sherr.ErrNoUserIDInToken
-	// }
-	logger.Log.Info("User token is valid")
+	logger.Log.Debug("User token is valid")
 	return claims.UserID, nil
 }
 
@@ -107,10 +104,6 @@ func AuthMiddleware(h http.Handler) http.Handler {
 		q := r.URL.Query()
 		q.Add("userUUID", userID.String())
 		r.URL.RawQuery = q.Encode()
-
-		logger.Log.Info("Got user id from token", 
-			logger.StringMark("User ID", userID.String()),
-		)
 
 		h.ServeHTTP(w, r)
 	}

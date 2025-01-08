@@ -6,6 +6,7 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	authenticator "github.com/Alena-Kurushkina/gophermart.git/internal/auth"
+	"github.com/Alena-Kurushkina/gophermart.git/internal/compress"
 	"github.com/Alena-Kurushkina/gophermart.git/internal/config"
 	"github.com/Alena-Kurushkina/gophermart.git/internal/logger"
 )
@@ -43,7 +44,8 @@ func (s *Server) Run() {
 func newRouter(hdl Handler) chi.Router{
 	r:=chi.NewRouter()
 
-	r.Use(logger.LogMiddleware)
+	r.Use(logger.LogMiddleware, compress.GzipMiddleware)
+
 	r.Post("/api/user/register", hdl.UserRegister)
 	r.Post("/api/user/login", hdl.UserAuthenticate)
 

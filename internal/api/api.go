@@ -7,7 +7,6 @@ import (
 	"errors"
 	"io"
 	"net/http"
-	"time"
 
 	luhnmod10 "github.com/luhnmod10/go"
 	uuid "github.com/satori/go.uuid"
@@ -18,59 +17,30 @@ import (
 	"github.com/Alena-Kurushkina/gophermart.git/internal/gopherror"
 	"github.com/Alena-Kurushkina/gophermart.git/internal/helpers"
 	"github.com/Alena-Kurushkina/gophermart.git/internal/logger"
+	"github.com/Alena-Kurushkina/gophermart.git/internal/model"
 	"github.com/Alena-Kurushkina/gophermart.git/internal/worker"
 )
 
 type Storager interface {
 	AddOrder(ctx context.Context, userID uuid.UUID, number string) error
-	GetOrderByNumber(ctx context.Context, number string) (*Order, error)
+	GetOrderByNumber(ctx context.Context, number string) (*model.OrderFromDB, error)
 	AddUser(ctx context.Context, userID uuid.UUID, login, hashedPassword string) error
 	CheckUser(ctx context.Context, login string) (uuid.UUID, string, error)
-	GetUserOrders(ctx context.Context, userID uuid.UUID) ([]Order, error)
-	GetUserAccruals(ctx context.Context, userID uuid.UUID) (*Balance, error)
+	GetUserOrders(ctx context.Context, userID uuid.UUID) ([]model.OrderFromDB, error)
+	GetUserAccruals(ctx context.Context, userID uuid.UUID) (*model.BalanceFromDB, error)
 	WithdrawFunds(ctx context.Context, id uuid.UUID, number string, sum uint32) error
-	GetUserWithdrawals(ctx context.Context, id uuid.UUID) ([]Withdrawal, error)
+	GetUserWithdrawals(ctx context.Context, id uuid.UUID) ([]model.WithdrawalFromDB, error)
 }
 
 type AccrualWorker interface {
 	Push(*worker.Task)
 }
 
-type (
-	Gophermart struct {
-		storage Storager
-		config  *config.Config
-		queue   AccrualWorker
-	}
-
-	Order struct {
-		Number        string    `json:"number"`
-		UserID        uuid.UUID `json:"-"`
-		UploadedAt    time.Time `json:"uploaded_at"`
-		Status        string    `json:"status"`
-		Accrual       uint32    `json:"-"` // TODO:
-		AccrualOutput float32   `json:"accrual,omitempty"`
-	}
-
-	Credentials struct {
-		Login    string `json:"login"`
-		Password string `json:"password"`
-	}
-
-	Balance struct {
-		Accruals uint32 `json:"-"`
-		CurrentBalance float32 `json:"current"`
-		Withdrawn uint32 `json:"-"`
-		WithdrawnOutput float32 `json:"withdrawn"`
-	}
-
-	Withdrawal struct {
-		OrderNumber string `json:"order"`
-		SumInput float32 `json:"sum"`
-		Sum uint32 `json:"-"`
-		ProcessedAt time.Time `json:"processed_at,omitempty"`
-	}
-)
+type Gophermart struct {
+	storage Storager
+	config  *config.Config
+	queue   AccrualWorker
+}
 
 func NewGophermart(storage Storager, config *config.Config, queue AccrualWorker) gophermart.Handler {
 	ghmart := Gophermart{
@@ -92,7 +62,7 @@ func (gh *Gophermart) UserAuthenticate(res http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	var credentials Credentials
+	var credentials model.Credentials
 	err := json.NewDecoder(req.Body).Decode(&credentials)
 	if err != nil {
 		// `400` — неверный формат запроса
@@ -148,7 +118,7 @@ func (gh *Gophermart) UserRegister(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	var credentials Credentials
+	var credentials model.Credentials
 	err := json.NewDecoder(req.Body).Decode(&credentials)
 	if err != nil {
 		// `400` — неверный формат запроса
@@ -287,11 +257,12 @@ func (gh *Gophermart) GetOrders(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	ordersToOutput:=make([]*model.Order, len(orders))
 	for k, v := range orders {
-		orders[k].AccrualOutput = helpers.BaseToAccrual(v.Accrual)
+		ordersToOutput[k]=v.ConvertOutput()
 	}
 
-	response, err := json.Marshal(orders)
+	response, err := json.Marshal(ordersToOutput)
 	if err != nil {
 		// `500` — внутренняя ошибка сервера
 		http.Error(res, err.Error(), http.StatusInternalServerError)
@@ -315,17 +286,15 @@ func (gh *Gophermart) GetBalance(res http.ResponseWriter, req *http.Request) {
 
 	balance, err := gh.storage.GetUserAccruals(req.Context(), id)
 	if err != nil {
-		logger.Log.Error("Error while getting user's balance", logger.ErrorMark(err))
 		// `500` — внутренняя ошибка сервера
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// вычисляем баланс
-	balance.CurrentBalance=helpers.BaseToAccrual(balance.Accruals-balance.Withdrawn)
-	balance.WithdrawnOutput=helpers.BaseToAccrual(balance.Withdrawn)
+	// преобразуем структуру для вывода значений пользователю
+	balanceToOutput:=balance.ConvertOutput()
 
-	response, err := json.Marshal(balance)
+	response, err := json.Marshal(balanceToOutput)
 	if err != nil {
 		// `500` — внутренняя ошибка сервера
 		http.Error(res, err.Error(), http.StatusInternalServerError)
@@ -347,7 +316,7 @@ func (gh *Gophermart) WithdrawFunds(res http.ResponseWriter, req *http.Request) 
 		return
 	}
 
-	var withdrawal Withdrawal
+	var withdrawal model.Withdrawal
 	if err:=json.NewDecoder(req.Body).Decode(&withdrawal); err!=nil {
 		http.Error(res, "Can't read body", http.StatusBadRequest)
 		return
@@ -358,7 +327,7 @@ func (gh *Gophermart) WithdrawFunds(res http.ResponseWriter, req *http.Request) 
 		http.Error(res, "Incorrect order number", http.StatusUnprocessableEntity)
 	}
 
-	withdrawal.Sum=helpers.AccrualToBase(withdrawal.SumInput)
+	withdrawalInner:=withdrawal.ConvertInput()
 
 	q := req.URL.Query()
 	id, err := uuid.FromString(q.Get("userUUID"))
@@ -374,13 +343,13 @@ func (gh *Gophermart) WithdrawFunds(res http.ResponseWriter, req *http.Request) 
 		return
 	}
 
-	if balance.Accruals - balance.Withdrawn < withdrawal.Sum{
+	if balance.Accruals - balance.Withdrawals < withdrawalInner.Sum{
 		// `402` — на счету недостаточно средств
 		http.Error(res, "Not enough funds", http.StatusPaymentRequired)
 		return
 	}
 
-	err=gh.storage.WithdrawFunds(req.Context(), id, withdrawal.OrderNumber, withdrawal.Sum)
+	err=gh.storage.WithdrawFunds(req.Context(), id, withdrawalInner.OrderNumber, withdrawalInner.Sum)
 	if err!=nil{
 		// `500` — внутренняя ошибка сервера
 		http.Error(res, err.Error(), http.StatusInternalServerError)
@@ -414,11 +383,12 @@ func (gh *Gophermart) GetWithdrawals(res http.ResponseWriter, req *http.Request)
 		return
 	}
 
+	withdrawalsOutput:=make([]model.Withdrawal, len(withdrawals))
 	for k, v := range withdrawals {
-		withdrawals[k].SumInput = helpers.BaseToAccrual(v.Sum)
+		withdrawalsOutput[k] = *v.ConvertOutput()
 	}
 
-	response, err := json.Marshal(withdrawals)
+	response, err := json.Marshal(withdrawalsOutput)
 	if err != nil {
 		// `500` — внутренняя ошибка сервера
 		http.Error(res, err.Error(), http.StatusInternalServerError)

@@ -12,24 +12,6 @@ import (
 
 var Log *zap.Logger = zap.NewNop()
 
-// func Initialize() error {
-// 	cfg := zap.NewProductionConfig()
-// 	cfg.OutputPaths = []string{
-// 		"/Users/alena/log/gophermart.log",
-// 		"stdout",
-// 	}
-// 	zl, err := cfg.Build()
-
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	sugar := zl.Sugar()
-// 	Log = sugar
-
-// 	return nil
-// }
-
 func CreateLogger(){
 	stdout := zapcore.AddSync(os.Stdout)
 
@@ -44,8 +26,6 @@ func CreateLogger(){
     level := zap.NewAtomicLevelAt(zap.DebugLevel)
 
     productionCfg := zap.NewProductionEncoderConfig()
-    // productionCfg.TimeKey = "timestamp"
-    // productionCfg.EncodeTime = zapcore.ISO8601TimeEncoder
 
     developmentCfg := zap.NewDevelopmentEncoderConfig()
     developmentCfg.EncodeLevel = zapcore.CapitalColorLevelEncoder

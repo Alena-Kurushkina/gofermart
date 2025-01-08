@@ -11,9 +11,9 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 	uuid "github.com/satori/go.uuid"
 
-	"github.com/Alena-Kurushkina/gophermart.git/internal/api"
 	"github.com/Alena-Kurushkina/gophermart.git/internal/gopherror"
 	"github.com/Alena-Kurushkina/gophermart.git/internal/logger"
+	"github.com/Alena-Kurushkina/gophermart.git/internal/model"
 )
 
 const UniqueConstraintViolationErrorCode string= "23505"
@@ -75,14 +75,14 @@ func (d DBStorage) AddOrder(ctx context.Context, userID uuid.UUID, number string
 	return nil
 }
 
-func (d DBStorage) GetOrderByNumber(ctx context.Context, number string) (*api.Order, error){
+func (d DBStorage) GetOrderByNumber(ctx context.Context, number string) (*model.OrderFromDB, error){
 	row:=d.database.QueryRowContext(ctx, 
 		`SELECT number, user_id, uploaded_at, status_processing, accrual 
 		FROM orders
 		WHERE number = $1`,
 		number,
 	)
-	var order api.Order
+	var order model.OrderFromDB
 	err:=row.Scan(&order.Number, &order.UserID, &order.UploadedAt, &order.Status, &order.Accrual)
 	if err != nil {
 		return nil,err
@@ -155,7 +155,7 @@ func (d DBStorage) CheckUser(ctx context.Context, login string) (uuid.UUID, stri
 	return id, password, nil
 }
 
-func (d DBStorage) GetUserOrders(ctx context.Context, id uuid.UUID) ([]api.Order, error){
+func (d DBStorage) GetUserOrders(ctx context.Context, id uuid.UUID) ([]model.OrderFromDB, error){
 	rows, err := d.database.QueryContext(ctx,
 		`SELECT number, user_id, uploaded_at, status_processing, accrual
 		FROM orders
@@ -168,11 +168,11 @@ func (d DBStorage) GetUserOrders(ctx context.Context, id uuid.UUID) ([]api.Order
 	}
 	defer rows.Close()
 
-	records := make([]api.Order, 0, 10)
+	records := make([]model.OrderFromDB, 0, 10)
 
 	// пробегаем по всем записям
 	for rows.Next() {
-		var v api.Order
+		var v model.OrderFromDB
 		err = rows.Scan(&v.Number, &v.UserID, &v.UploadedAt, &v.Status, &v.Accrual)
 		if err != nil {
 			return nil, err
@@ -189,11 +189,11 @@ func (d DBStorage) GetUserOrders(ctx context.Context, id uuid.UUID) ([]api.Order
 	return records, nil
 }
 
-func (d DBStorage) GetUserAccruals(ctx context.Context, id uuid.UUID) (*api.Balance, error){
+func (d DBStorage) GetUserAccruals(ctx context.Context, id uuid.UUID) (*model.BalanceFromDB, error){
 	rows, err := d.database.QueryContext(ctx,
-		`SELECT sum(accrual) from orders where user_id=$1
+		`SELECT coalesce(sum(accrual), 0)  from orders where user_id=$1
 		UNION ALL
-		SELECT sum(sum) from withdraws where user_id=$1
+		SELECT coalesce(sum(sum), 0) from withdraws where user_id=$1
 		`,
 		id.String(),
 	)
@@ -202,7 +202,7 @@ func (d DBStorage) GetUserAccruals(ctx context.Context, id uuid.UUID) (*api.Bala
 	}
 	defer rows.Close()
 
-	var balance api.Balance
+	var balance model.BalanceFromDB
 
 	// считываем значение суммы начислений
 	if rows.Next(){
@@ -216,7 +216,7 @@ func (d DBStorage) GetUserAccruals(ctx context.Context, id uuid.UUID) (*api.Bala
 
 	// считываем значение суммы списаний
 	if rows.Next(){
-		err = rows.Scan(&balance.Withdrawn)
+		err = rows.Scan(&balance.Withdrawals)
 		if err != nil {
 			return nil, err
 		}
@@ -242,7 +242,7 @@ func (d DBStorage) WithdrawFunds(ctx context.Context, id uuid.UUID, number strin
 	return nil
 }
 
-func (d DBStorage) GetUserWithdrawals(ctx context.Context, id uuid.UUID) ([]api.Withdrawal, error){
+func (d DBStorage) GetUserWithdrawals(ctx context.Context, id uuid.UUID) ([]model.WithdrawalFromDB, error){
 	rows, err := d.database.QueryContext(ctx,
 		`SELECT withdraw_number, sum, processed_at
 		FROM withdraws
@@ -255,11 +255,11 @@ func (d DBStorage) GetUserWithdrawals(ctx context.Context, id uuid.UUID) ([]api.
 	}
 	defer rows.Close()
 
-	records := make([]api.Withdrawal, 0, 10)
+	records := make([]model.WithdrawalFromDB, 0, 10)
 
 	// пробегаем по всем записям
 	for rows.Next() {
-		var v api.Withdrawal
+		var v model.WithdrawalFromDB
 		err = rows.Scan(&v.OrderNumber, &v.Sum, &v.ProcessedAt)
 		if err != nil {
 			return nil, err
