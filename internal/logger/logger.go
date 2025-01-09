@@ -95,7 +95,6 @@ func LogMiddleware(h http.Handler) http.Handler {
 			responseData: &responseData{
 				code: 0,
 				size: 0,
-				body: "",
 			},
 		}
 		logRequest(uri, method)

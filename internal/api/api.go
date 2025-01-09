@@ -331,6 +331,7 @@ func (gh *Gophermart) WithdrawFunds(res http.ResponseWriter, req *http.Request) 
 	if valid := luhnmod10.Valid(withdrawal.OrderNumber); !valid {
 		//`422` — неверный номер заказа
 		http.Error(res, "Incorrect order number", http.StatusUnprocessableEntity)
+		return
 	}
 
 	withdrawalInner:=withdrawal.ConvertInput()
@@ -385,7 +386,7 @@ func (gh *Gophermart) GetWithdrawals(res http.ResponseWriter, req *http.Request)
 
 	if len(withdrawals) == 0 {
 		// `204` — нет ни одного списания
-		http.Error(res, "No one withdrawal", http.StatusNoContent)
+		res.WriteHeader(http.StatusNoContent)
 		return
 	}
 
