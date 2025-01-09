@@ -52,6 +52,13 @@ jobs:
           (cd cmd/gophermart && go build -buildvcs=false -o gophermart)
           (cd cmd/accrual && chmod +x accrual_linux_amd64)
 
+      - name: Run DB migration
+        run: |
+          curl -s https://packagecloud.io/install/repositories/golang-migrate/migrate/script.deb.sh | sudo bash
+          sudo apt-get update
+          sudo apt-get install migrate
+          migrate -source file:internal/storage/migrations -database "postgresql://postgres:postgres@localhost:5432/praktikum?sslmode=disable" -verbose up
+      
       - name: Test
         run: |
           gophermarttest \
