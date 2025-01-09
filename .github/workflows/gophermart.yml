@@ -54,9 +54,7 @@ jobs:
 
       - name: Run DB migration
         run: |
-          curl -s https://packagecloud.io/install/repositories/golang-migrate/migrate/script.deb.sh
-          apt-get update
-          apt-get install migrate
+          go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
           migrate -source file:internal/storage/migrations -database "postgresql://postgres:postgres@localhost:5432/praktikum?sslmode=disable" -verbose up
       
       - name: Test
