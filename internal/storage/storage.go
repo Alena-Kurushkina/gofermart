@@ -29,23 +29,23 @@ func NewDBStorage (connectionStr string) (*DBStorage, error){
 	}
 	logger.Log.Debug("DB connection opened")
 
-	//TODO: use makefile
+	// for local usage
 	
-	driver, err := postgres.WithInstance(db, &postgres.Config{})
-	if err!=nil{
-		return nil, err
-	}
-    m, err := migrate.NewWithDatabaseInstance(
-        "file:internal/storage/migrations",
-        "gophermart", driver,
-	)
-	if err!=nil{
-		return nil, err
-	}
-    err=m.Up()
-	if err!=nil{
-		return nil, err
-	}
+	// driver, err := postgres.WithInstance(db, &postgres.Config{})
+	// if err!=nil{
+	// 	return nil, err
+	// }
+    // m, err := migrate.NewWithDatabaseInstance(
+    //     "file:internal/storage/migrations",
+    //     "gophermart", driver,
+	// )
+	// if err!=nil{
+	// 	return nil, err
+	// }
+    // err=m.Up()
+	// if err!=nil{
+	// 	return nil, err
+	// }
 
 	return &DBStorage{database: db}, nil
 }
