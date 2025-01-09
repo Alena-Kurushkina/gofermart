@@ -4,9 +4,10 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 
 	"github.com/Alena-Kurushkina/gophermart.git/internal/auth"
-	_"github.com/Alena-Kurushkina/gophermart.git/internal/compress"
+	_ "github.com/Alena-Kurushkina/gophermart.git/internal/compress"
 	"github.com/Alena-Kurushkina/gophermart.git/internal/config"
 	"github.com/Alena-Kurushkina/gophermart.git/internal/logger"
 )
@@ -45,6 +46,7 @@ func newRouter(hdl Handler) chi.Router{
 	r:=chi.NewRouter()
 
 	r.Use(logger.LogMiddleware) //, compress.GzipMiddleware)
+	r.Use(middleware.Compress(5,"application/json"))
 
 	r.Post("/api/user/register", hdl.UserRegister)
 	r.Post("/api/user/login", hdl.UserAuthenticate)
