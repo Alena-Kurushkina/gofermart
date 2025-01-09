@@ -86,7 +86,6 @@ func (u *updater) updateStatus(number string) (Status, uint32, error) {
 		logger.Log.Error("Accrual service has returned Internal server error")
 	case 429:
 		logger.Log.Error("The number of requests to the accrual service has been exceeded")
-		// TODO: как уменьшить количество запросов
 	case 204:
 		logger.Log.Info("Order "+number+" are not registered in calculation system")
 	case 200:
@@ -162,8 +161,6 @@ func RunWorkers(ctx context.Context, db AccrualStorager, address string) Queue {
 func (w *Worker) loop() {
 	tempStatuses := []string{StatusRegistered, StatusProcessing, StatusNew}
     for {
-		// TODO: как и когда закрывать канал с заказами
-
 		// берём заказ из очереди
 		t := w.queue.Pop()
 		// запрашиваем статус из службы accrual

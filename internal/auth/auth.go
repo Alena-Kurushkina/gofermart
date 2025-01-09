@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/Alena-Kurushkina/gophermart.git/internal/gopherror"
@@ -21,8 +22,16 @@ type Claims struct {
 
 const tokenExp = time.Hour * 3
 
-// TODO: перенести в env
-const secretKey = "secretkey"
+var secretKey string
+
+func init(){
+	sa, exists := os.LookupEnv("AUTH_KEY")
+	if exists {
+		secretKey = sa
+	}else{
+		sa="jhbsaucagv7654fas54dxahvsj87"
+	}
+}
 
 // buildJWTString создаёт токен и возвращает его в виде строки.
 func buildJWTString(id uuid.UUID) (string, error) {

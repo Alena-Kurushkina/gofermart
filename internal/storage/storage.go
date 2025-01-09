@@ -22,7 +22,6 @@ type DBStorage struct {
 	database *sql.DB
 }
 
-// TODO: use makefile for up migration
 func NewDBStorage (connectionStr string) (*DBStorage, error){
 	db, err:=sql.Open("pgx", connectionStr)
 	if err!=nil{
@@ -31,6 +30,7 @@ func NewDBStorage (connectionStr string) (*DBStorage, error){
 	logger.Log.Debug("DB connection opened")
 
 	//TODO: use makefile
+	
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	if err!=nil{
 		return nil, err
