@@ -3,8 +3,9 @@ package model
 import (
 	"time"
 
-	"github.com/Alena-Kurushkina/gophermart.git/internal/helpers"
 	uuid "github.com/satori/go.uuid"
+
+	"github.com/Alena-Kurushkina/gophermart.git/internal/helpers"
 )
 
 type Credentials struct {

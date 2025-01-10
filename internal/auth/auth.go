@@ -7,10 +7,11 @@ import (
 	"os"
 	"time"
 
-	"github.com/Alena-Kurushkina/gophermart.git/internal/gopherror"
-	"github.com/Alena-Kurushkina/gophermart.git/internal/logger"
 	"github.com/golang-jwt/jwt/v4"
 	uuid "github.com/satori/go.uuid"
+
+	"github.com/Alena-Kurushkina/gophermart.git/internal/gopherror"
+	"github.com/Alena-Kurushkina/gophermart.git/internal/logger"
 )
 
 // Claims — структура утверждений, которая включает стандартные утверждения и
@@ -29,7 +30,7 @@ func init(){
 	if exists {
 		secretKey = sa
 	}else{
-		sa="jhbsaucagv7654fas54dxahvsj87"
+		sa=""
 	}
 }
 

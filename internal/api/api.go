@@ -205,27 +205,26 @@ func (gh *Gophermart) AddOrder(res http.ResponseWriter, req *http.Request) {
 
 	err = gh.storage.AddOrder(req.Context(), id, number)
 	if err != nil {
-		// если такой номер заказа уже есть в БД
-		if errors.Is(err, gopherror.ErrRecordAlreadyExists) {
-			// получаем информацию о заказе по номеру
-			order, err := gh.storage.GetOrderByNumber(req.Context(), number)
-			if err != nil {
-				// `500` — внутренняя ошибка сервера
-				http.Error(res, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			if order.UserID != id {
-				//`409` — номер заказа уже был загружен другим пользователем
-				res.WriteHeader(http.StatusConflict)
-				return
-			}
-			//`200` — номер заказа уже был загружен этим пользователем;
-			res.WriteHeader(http.StatusOK)
-			return
-		} else {
+		// если любая ошибка, кроме "Запись уже существует"
+		if !errors.Is(err, gopherror.ErrRecordAlreadyExists) {
 			http.Error(res, err.Error(), http.StatusInternalServerError)
 			return
 		}
+		// получаем информацию о заказе по номеру
+		order, err := gh.storage.GetOrderByNumber(req.Context(), number)
+		if err != nil {
+			// `500` — внутренняя ошибка сервера
+			http.Error(res, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if order.UserID != id {
+			//`409` — номер заказа уже был загружен другим пользователем
+			res.WriteHeader(http.StatusConflict)
+			return
+		}
+		//`200` — номер заказа уже был загружен этим пользователем;
+		res.WriteHeader(http.StatusOK)
+		return
 	}
 	// добавлен новый заказ, отправляем на обработку
 	gh.queue.Push(&worker.Task{Number: number, Status: worker.StatusNew})

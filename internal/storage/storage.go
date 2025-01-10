@@ -29,24 +29,6 @@ func NewDBStorage (connectionStr string) (*DBStorage, error){
 	}
 	logger.Log.Debug("DB connection opened")
 
-	// for local usage
-	
-	// driver, err := postgres.WithInstance(db, &postgres.Config{})
-	// if err!=nil{
-	// 	return nil, err
-	// }
-    // m, err := migrate.NewWithDatabaseInstance(
-    //     "file:internal/storage/migrations",
-    //     "gophermart", driver,
-	// )
-	// if err!=nil{
-	// 	return nil, err
-	// }
-    // err=m.Up()
-	// if err!=nil{
-	// 	return nil, err
-	// }
-
 	return &DBStorage{database: db}, nil
 }
 
@@ -205,23 +187,21 @@ func (d DBStorage) GetUserAccruals(ctx context.Context, id uuid.UUID) (*model.Ba
 	var balance model.BalanceFromDB
 
 	// считываем значение суммы начислений
-	if rows.Next(){
-		err=rows.Scan(&balance.Accruals)
-		if err != nil {
-			return nil, err
-		}
-	}else{
+	if !rows.Next(){
 		return nil, rows.Err()
 	}
-
+	err=rows.Scan(&balance.Accruals)
+	if err != nil {
+		return nil, err
+	}
+	
 	// считываем значение суммы списаний
-	if rows.Next(){
-		err = rows.Scan(&balance.Withdrawals)
-		if err != nil {
-			return nil, err
-		}
-	}else{
+	if !rows.Next(){
 		return nil, rows.Err()
+	}
+	err = rows.Scan(&balance.Withdrawals)
+	if err != nil {
+		return nil, err
 	}
 
 	return &balance, nil
