@@ -71,7 +71,7 @@ type AccrualResponse struct {
 
 func (u *updater) updateStatus(number string) (Status, uint32, error) {
 	logger.Log.Debug("Sending request to accrual service to update order status")
-	req,err:=http.NewRequest(http.MethodGet, "http://"+u.accrualAddress+"/api/orders/"+number, nil)
+	req,err:=http.NewRequest(http.MethodGet, u.accrualAddress+"/api/orders/"+number, nil)
 	if err!=nil{
 		return StatusNew, 0, err
 	}
@@ -86,7 +86,6 @@ func (u *updater) updateStatus(number string) (Status, uint32, error) {
 		logger.Log.Error("Accrual service has returned Internal server error")
 	case 429:
 		logger.Log.Error("The number of requests to the accrual service has been exceeded")
-		// TODO: как уменьшить количество запросов
 	case 204:
 		logger.Log.Info("Order "+number+" are not registered in calculation system")
 	case 200:
@@ -162,14 +161,6 @@ func RunWorkers(ctx context.Context, db AccrualStorager, address string) Queue {
 func (w *Worker) loop() {
 	tempStatuses := []string{StatusRegistered, StatusProcessing, StatusNew}
     for {
-		// TODO: как и когда закрывать канал с заказами
-
-		// if _,ok:= <-w.doneCtx.Done();!ok {
-		// 	logger.Log.Info("Worker is stopped")
-		// 	close(w.queue)
-		// 	break
-		// }
-
 		// берём заказ из очереди
 		t := w.queue.Pop()
 		// запрашиваем статус из службы accrual
@@ -182,15 +173,16 @@ func (w *Worker) loop() {
 			w.queue.Push(t)
 			continue
 		}
-		logger.Log.Debug("Worker has updated the status of order",
-			logger.IntMark("Worker id", w.id),
-			logger.StringMark("Order number", t.Number),
-			logger.StringMark("New status", string(accrualStatus)),
-			logger.StringMark("Old status", string(t.Status)),
-			logger.Uint32Mark("Accrual", accrual),
-		)
+		
 		// если статус обновился, обновляем данные в БД
 		if string(accrualStatus)!=string(t.Status){
+			logger.Log.Debug("Worker has updated the status of order",
+				logger.IntMark("Worker id", w.id),
+				logger.StringMark("Order number", t.Number),
+				logger.StringMark("New status", string(accrualStatus)),
+				logger.StringMark("Old status", string(t.Status)),
+				logger.Uint32Mark("Accrual", accrual),
+			)
 			if accrualStatus == StatusProcessed {
 				w.updater.saveStatusAndAccrual(w.doneCtx, t.Number, accrualStatus, accrual)
 			} else {

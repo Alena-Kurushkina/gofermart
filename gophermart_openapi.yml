@@ -113,7 +113,7 @@ paths:
     get:
       tags:
         - balance
-      summary: Get sum of orders accruals and sum of used accruals
+      summary: Get current balance and sum of withdrawals (used points)
       security:
         - bearerAuth: []
       responses:

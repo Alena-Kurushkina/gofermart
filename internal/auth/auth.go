@@ -1,15 +1,17 @@
-package authenticator
+package auth
 
 import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
-	gopherror "github.com/Alena-Kurushkina/gophermart.git/internal/errors"
-	"github.com/Alena-Kurushkina/gophermart.git/internal/logger"
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
+
+	"github.com/Alena-Kurushkina/gophermart.git/internal/gopherror"
+	"github.com/Alena-Kurushkina/gophermart.git/internal/logger"
 )
 
 // Claims — структура утверждений, которая включает стандартные утверждения и
@@ -21,8 +23,16 @@ type Claims struct {
 
 const tokenExp = time.Hour * 3
 
-// TODO: перенести в env
-const secretKey = "secretkey"
+var secretKey string
+
+func init(){
+	sa, exists := os.LookupEnv("AUTH_KEY")
+	if exists {
+		secretKey = sa
+	}else{
+		sa=""
+	}
+}
 
 // buildJWTString создаёт токен и возвращает его в виде строки.
 func buildJWTString(id uuid.UUID) (string, error) {
@@ -61,10 +71,7 @@ func getUserIDFromJWT(tokenString string) (uuid.UUID, error) {
 	if !token.Valid {
 		return uuid.Nil, gopherror.ErrTokenInvalid
 	}
-	// if claims.UserID == uuid.Nil {
-	// 	return uuid.Nil, sherr.ErrNoUserIDInToken
-	// }
-	logger.Log.Info("User token is valid")
+	logger.Log.Debug("User token is valid")
 	return claims.UserID, nil
 }
 
@@ -107,10 +114,6 @@ func AuthMiddleware(h http.Handler) http.Handler {
 		q := r.URL.Query()
 		q.Add("userUUID", userID.String())
 		r.URL.RawQuery = q.Encode()
-
-		logger.Log.Info("Got user id from token", 
-			logger.StringMark("User ID", userID.String()),
-		)
 
 		h.ServeHTTP(w, r)
 	}

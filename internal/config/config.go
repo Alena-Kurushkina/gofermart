@@ -15,9 +15,9 @@ func InitConfig() *Config {
 	cfg := Config{}
 
 	// define flags
-	flag.StringVar(&cfg.ServerAddress, "a", "localhost:8081", "address of the server")
+	flag.StringVar(&cfg.ServerAddress, "a", "localhost:8080", "address of the server")
 	flag.StringVar(&cfg.DatabaseURI, "d", "host=127.0.0.1 user=practicum password=123456 dbname=gophermart sslmode=disable", "connection string to database")	
-	flag.StringVar(&cfg.AccrualAddress, "r", "localhost:8080", "address of accrual server")
+	flag.StringVar(&cfg.AccrualAddress, "r", "http://localhost:8081", "address of accrual server")
 
 	// parse flags
 	flag.Parse()
